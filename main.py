@@ -52,6 +52,33 @@ def update_slider(x, y, value, max_value):
             value = (mx - x) / SLIDER_WIDTH * max_value
     return value
 
+def draw_buttons():
+    pygame.draw.rect(screen, GREEN, (50, 400, 200, 30))
+    start_button_text = font_medium.render("Start Simulation", True, WHITE)
+    screen.blit(start_button_text, (60, 405))
+
+    pygame.draw.rect(screen, BLUE, (50, 450, 200, 30))
+    reset_button_text = font_medium.render("Reset Simulation", True, WHITE)
+    screen.blit(reset_button_text, (60, 455))
+
+    pygame.draw.rect(screen, RED, (300, 400, 150, 30))
+    pause_button_text = font_medium.render("Pause / Resume", True, WHITE)
+    screen.blit(pause_button_text, (310, 405))
+
+def draw_info():
+    info_text = font_medium.render(f"Position: ({x:.1f}, {y:.1f})", True, BLACK)
+    screen.blit(info_text, (20, 350))
+
+    velocity_text = font_medium.render(f"Velocity: ({vx:.1f}, {vy:.1f})", True, BLACK)
+    screen.blit(velocity_text, (20, 380))
+
+def reset_simulation():
+    global x, y, vx, vy, trajectory_points
+    x, y = 50, HEIGHT - 50
+    vx = velocity * math.cos(math.radians(angle))
+    vy = -velocity * math.sin(math.radians(angle))
+    trajectory_points = []
+
 running = True
 while running:
     screen.fill(WHITE)
@@ -64,17 +91,15 @@ while running:
 
     instruction1 = font_medium.render("Press 'Q' or close window to quit", True, BLACK)
     instruction2 = font_medium.render("Adjust simulation parameters:", True, BLACK)
-    instruction3 = font_medium.render(f"Angle: {angle} degrees", True, BLACK)
-    instruction4 = font_medium.render(f"Velocity: {velocity} pixels/frame", True, BLACK)
-    instruction5 = font_medium.render("Press 'P' to pause/resume", True, BLACK)
-    instruction6 = font_medium.render(f"Simulation Speed: {simulation_speed}x", True, BLACK)
-    instruction7 = font_medium.render(f"Air Resistance: {air_resistance}", True, BLACK)
-    instruction8 = font_medium.render(f"Gravity: {gravity}", True, BLACK)
+    instruction3 = font_medium.render(f"Angle: {angle:.1f} degrees", True, BLACK)
+    instruction4 = font_medium.render(f"Velocity: {velocity:.1f} pixels/frame", True, BLACK)
+    instruction6 = font_medium.render(f"Simulation Speed: {simulation_speed:.1f}x", True, BLACK)
+    instruction7 = font_medium.render(f"Air Resistance: {air_resistance:.2f}", True, BLACK)
+    instruction8 = font_medium.render(f"Gravity: {gravity:.2f}", True, BLACK)
     screen.blit(instruction1, (20, 70))
     screen.blit(instruction2, (20, 100))
     screen.blit(instruction3, (20, 130))
     screen.blit(instruction4, (20, 160))
-    screen.blit(instruction5, (20, 190))
     screen.blit(instruction6, (20, 220))
     screen.blit(instruction7, (20, 250))
     screen.blit(instruction8, (20, 280))
@@ -83,25 +108,20 @@ while running:
     pygame.draw.line(screen, BLUE, (50, HEIGHT - 100), (50, HEIGHT - 50), 2)
 
     # Draw sliders
-    angle = update_slider(50, 140, angle, 90)
-    velocity = update_slider(50, 190, velocity, 50)
-    simulation_speed = update_slider(50, 240, simulation_speed, 5)
-    air_resistance = update_slider(50, 290, air_resistance, 0.1)
-    gravity = update_slider(50, 340, gravity, 1.0)
+    angle = update_slider(600, 90, angle, 90)
+    velocity = update_slider(600, 140, velocity, 50)
+    simulation_speed = update_slider(600, 190, simulation_speed, 5)
+    air_resistance = update_slider(600, 240, air_resistance, 0.1)
+    gravity = update_slider(600, 290, gravity, 1.0)
 
-    draw_slider(50, 140, angle, 90, "Angle:")
-    draw_slider(50, 190, velocity, 50, "Velocity:")
-    draw_slider(50, 240, simulation_speed, 5, "Simulation Speed:")
-    draw_slider(50, 290, air_resistance, 0.1, "Air Resistance:")
-    draw_slider(50, 340, gravity, 1.0, "Gravity:")
+    draw_slider(600, 90, angle, 90, "Angle:")
+    draw_slider(600, 140, velocity, 50, "Velocity:")
+    draw_slider(600, 190, simulation_speed, 5, "Simulation Speed:")
+    draw_slider(600, 240, air_resistance, 0.1, "Air Resistance:")
+    draw_slider(600, 290, gravity, 1.0, "Gravity:")
 
-    pygame.draw.rect(screen, GREEN, (50, 400, 200, 30))
-    start_button_text = font_medium.render("Start Simulation", True, WHITE)
-    screen.blit(start_button_text, (60, 405))
-
-    pygame.draw.rect(screen, BLUE, (50, 450, 200, 30))
-    reset_button_text = font_medium.render("Reset Simulation", True, WHITE)
-    screen.blit(reset_button_text, (60, 455))
+    draw_buttons()
+    draw_info()
 
     if not paused:
         if x >= 50 and y <= HEIGHT - 50:
@@ -136,25 +156,18 @@ while running:
             if event.key == pygame.K_q:
                 running = False
             elif event.key == pygame.K_p:
-                if not paused:
-                    pause_time = pygame.time.get_ticks()
-                    paused = True
-                else:
-                    start_time += pygame.time.get_ticks() - pause_time
-                    paused = False
+                paused = not paused
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mx, my = pygame.mouse.get_pos()
             if 50 <= mx <= 250 and 400 <= my <= 430:
-                x, y = 50, HEIGHT - 50
-                vx = velocity * math.cos(math.radians(angle))
-                vy = -velocity * math.sin(math.radians(angle))
-                trajectory_points = []
+                if not paused:
+                    paused = True
+                else:
+                    paused = False
             elif 50 <= mx <= 250 and 450 <= my <= 480:
-                angle = 45
-                velocity = 20
-                simulation_speed = 1.0
-                air_resistance = 0.05
-                gravity = 0.4
+                reset_simulation()
+            elif 300 <= mx <= 450 and 400 <= my <= 430:
+                paused = not paused
 
     pygame.display.flip()
 
