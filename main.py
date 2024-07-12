@@ -20,6 +20,7 @@ angle = 45
 velocity = 20
 gravity = 0.4
 simulation_speed = 1.0
+air_resistance = 0.05
 
 x, y = 50, HEIGHT - 50
 vx = velocity * math.cos(math.radians(angle))
@@ -30,6 +31,26 @@ trajectory_points = []
 paused = False
 start_time = 0
 pause_time = 0
+
+# Slider constants
+SLIDER_WIDTH = 200
+SLIDER_HEIGHT = 10
+SLIDER_COLOR = GREEN
+SLIDER_DRAG_COLOR = BLUE
+
+def draw_slider(x, y, value, max_value, label):
+    pygame.draw.rect(screen, WHITE, (x, y, SLIDER_WIDTH, SLIDER_HEIGHT))
+    pygame.draw.rect(screen, SLIDER_COLOR, (x, y, int(SLIDER_WIDTH * (value / max_value)), SLIDER_HEIGHT))
+
+    font_label = font_medium.render(label, True, BLACK)
+    screen.blit(font_label, (x, y - 25))
+
+def update_slider(x, y, value, max_value):
+    mx, my = pygame.mouse.get_pos()
+    if x <= mx <= x + SLIDER_WIDTH and y <= my <= y + SLIDER_HEIGHT:
+        if pygame.mouse.get_pressed()[0]:
+            value = (mx - x) / SLIDER_WIDTH * max_value
+    return value
 
 running = True
 while running:
@@ -47,51 +68,53 @@ while running:
     instruction4 = font_medium.render(f"Velocity: {velocity} pixels/frame", True, BLACK)
     instruction5 = font_medium.render("Press 'P' to pause/resume", True, BLACK)
     instruction6 = font_medium.render(f"Simulation Speed: {simulation_speed}x", True, BLACK)
+    instruction7 = font_medium.render(f"Air Resistance: {air_resistance}", True, BLACK)
+    instruction8 = font_medium.render(f"Gravity: {gravity}", True, BLACK)
     screen.blit(instruction1, (20, 70))
     screen.blit(instruction2, (20, 100))
     screen.blit(instruction3, (20, 130))
     screen.blit(instruction4, (20, 160))
     screen.blit(instruction5, (20, 190))
     screen.blit(instruction6, (20, 220))
+    screen.blit(instruction7, (20, 250))
+    screen.blit(instruction8, (20, 280))
 
     pygame.draw.line(screen, BLUE, (50, HEIGHT - 50), (WIDTH - 50, HEIGHT - 50), 2)
     pygame.draw.line(screen, BLUE, (50, HEIGHT - 100), (50, HEIGHT - 50), 2)
 
-    pygame.draw.rect(screen, GREEN, (50, 200, 200, 30))
-    angle_text = font_medium.render(f"Angle: {angle} degrees", True, WHITE)
-    screen.blit(angle_text, (60, 205))
+    # Draw sliders
+    angle = update_slider(50, 140, angle, 90)
+    velocity = update_slider(50, 190, velocity, 50)
+    simulation_speed = update_slider(50, 240, simulation_speed, 5)
+    air_resistance = update_slider(50, 290, air_resistance, 0.1)
+    gravity = update_slider(50, 340, gravity, 1.0)
 
-    pygame.draw.rect(screen, GREEN, (50, 250, 200, 30))
-    velocity_text = font_medium.render(f"Velocity: {velocity} pixels/frame", True, WHITE)
-    screen.blit(velocity_text, (60, 255))
-
-    pygame.draw.rect(screen, BLUE, (50, 300, 200, 30))
-    start_button_text = font_medium.render("Start Simulation", True, WHITE)
-    screen.blit(start_button_text, (60, 305))
-
-    pygame.draw.rect(screen, BLUE, (50, 350, 200, 30))
-    gravity_text = font_medium.render(f"Gravity: {gravity}", True, WHITE)
-    screen.blit(gravity_text, (60, 355))
+    draw_slider(50, 140, angle, 90, "Angle:")
+    draw_slider(50, 190, velocity, 50, "Velocity:")
+    draw_slider(50, 240, simulation_speed, 5, "Simulation Speed:")
+    draw_slider(50, 290, air_resistance, 0.1, "Air Resistance:")
+    draw_slider(50, 340, gravity, 1.0, "Gravity:")
 
     pygame.draw.rect(screen, GREEN, (50, 400, 200, 30))
-    speed_up_text = font_medium.render("Speed Up", True, WHITE)
-    screen.blit(speed_up_text, (60, 405))
+    start_button_text = font_medium.render("Start Simulation", True, WHITE)
+    screen.blit(start_button_text, (60, 405))
 
-    pygame.draw.rect(screen, GREEN, (50, 450, 200, 30))
-    slow_down_text = font_medium.render("Slow Down", True, WHITE)
-    screen.blit(slow_down_text, (60, 455))
+    pygame.draw.rect(screen, BLUE, (50, 450, 200, 30))
+    reset_button_text = font_medium.render("Reset Simulation", True, WHITE)
+    screen.blit(reset_button_text, (60, 455))
 
     if not paused:
         if x >= 50 and y <= HEIGHT - 50:
             trajectory_points.append((int(x), int(y)))
 
-            if len(trajectory_points) > 1000:
+            if len(trajectory_points) > 1000:  # Limit trajectory points for performance
                 trajectory_points.pop(0)
 
             for i in range(int(simulation_speed)):
                 x += vx
                 y += vy
                 vy += gravity / simulation_speed
+                vx *= (1 - air_resistance)
 
     pygame.draw.circle(screen, BLACK, (int(x), int(y)), 5)
 
@@ -121,30 +144,17 @@ while running:
                     paused = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mx, my = pygame.mouse.get_pos()
-            if 50 <= mx <= 250 and 200 <= my <= 230:
-                angle = (mx - 50) * 90 // 200
-                vx = velocity * math.cos(math.radians(angle))
-                vy = -velocity * math.sin(math.radians(angle))
-            elif 50 <= mx <= 250 and 250 <= my <= 280:
-                velocity = (mx - 50) * 50 // 200 + 1
-                vx = velocity * math.cos(math.radians(angle))
-                vy = -velocity * math.sin(math.radians(angle))
-            elif 50 <= mx <= 250 and 300 <= my <= 330:
+            if 50 <= mx <= 250 and 400 <= my <= 430:
                 x, y = 50, HEIGHT - 50
                 vx = velocity * math.cos(math.radians(angle))
                 vy = -velocity * math.sin(math.radians(angle))
-            elif 50 <= mx <= 250 and 350 <= my <= 380:
-                gravity += 0.1
-                gravity_text = font_medium.render(f"Gravity: {gravity}", True, WHITE)
-                screen.blit(gravity_text, (60, 355))
-            elif 50 <= mx <= 250 and 400 <= my <= 430:
-                simulation_speed = min(5.0, simulation_speed + 0.1)
-                speed_up_text = font_medium.render(f"Speed Up (+): {simulation_speed:.1f}x", True, WHITE)
-                screen.blit(speed_up_text, (60, 405))
+                trajectory_points = []
             elif 50 <= mx <= 250 and 450 <= my <= 480:
-                simulation_speed = max(0.1, simulation_speed - 0.1)
-                slow_down_text = font_medium.render(f"Slow Down (-): {simulation_speed:.1f}x", True, WHITE)
-                screen.blit(slow_down_text, (60, 455))
+                angle = 45
+                velocity = 20
+                simulation_speed = 1.0
+                air_resistance = 0.05
+                gravity = 0.4
 
     pygame.display.flip()
 
