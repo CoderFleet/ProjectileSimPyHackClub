@@ -16,6 +16,16 @@ pygame.display.set_caption("Projectile Motion Simulation")
 font_large = pygame.font.Font(None, 36)
 font_medium = pygame.font.Font(None, 28)
 
+angle = 45
+velocity = 20
+gravity = 0.4
+
+x, y = 50, HEIGHT - 50
+vx = velocity * math.cos(math.radians(angle))
+vy = -velocity * math.sin(math.radians(angle))
+
+trajectory_points = []
+
 running = True
 while running:
     screen.fill(WHITE)
@@ -27,19 +37,32 @@ while running:
     screen.blit(title, (20, 20))
 
     instruction1 = font_medium.render("Press 'Q' or close window to quit", True, BLACK)
-    instruction2 = font_medium.render("Adjust simulation in subsequent stages", True, BLACK)
+    instruction2 = font_medium.render("Adjust simulation parameters:", True, BLACK)
+    instruction3 = font_medium.render(f"Angle: {angle} degrees", True, BLACK)
+    instruction4 = font_medium.render(f"Velocity: {velocity} pixels/frame", True, BLACK)
     screen.blit(instruction1, (20, 70))
     screen.blit(instruction2, (20, 100))
+    screen.blit(instruction3, (20, 130))
+    screen.blit(instruction4, (20, 160))
 
     pygame.draw.line(screen, BLUE, (50, HEIGHT - 50), (WIDTH - 50, HEIGHT - 50), 2)
     pygame.draw.line(screen, BLUE, (50, HEIGHT - 100), (50, HEIGHT - 50), 2)
 
-    pygame.draw.rect(screen, GREEN, (50, 150, 200, 50))
-    button_text = font_medium.render("Start Simulation", True, WHITE)
-    screen.blit(button_text, (60, 160))
+    pygame.draw.rect(screen, GREEN, (50, 200, 200, 30))
+    angle_text = font_medium.render(f"Angle: {angle} degrees", True, WHITE)
+    screen.blit(angle_text, (60, 205))
 
-    pygame.draw.rect(screen, BLUE, (50, 250, 200, 20))
-    pygame.draw.rect(screen, RED, (50, 240, 10, 40))
+    pygame.draw.rect(screen, GREEN, (50, 250, 200, 30))
+    velocity_text = font_medium.render(f"Velocity: {velocity} pixels/frame", True, WHITE)
+    screen.blit(velocity_text, (60, 255))
+
+    pygame.draw.rect(screen, BLUE, (50, 300, 200, 30))
+    start_button_text = font_medium.render("Start Simulation", True, WHITE)
+    screen.blit(start_button_text, (60, 305))
+
+    pygame.draw.rect(screen, BLUE, (50, 350, 200, 30))
+    gravity_text = font_medium.render(f"Gravity: {gravity}", True, WHITE)
+    screen.blit(gravity_text, (60, 355))
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -47,6 +70,36 @@ while running:
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_q:
                 running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            mx, my = pygame.mouse.get_pos()
+            if 50 <= mx <= 250 and 200 <= my <= 230:
+                angle = (mx - 50) * 90 // 200
+                vx = velocity * math.cos(math.radians(angle))
+                vy = -velocity * math.sin(math.radians(angle))
+            elif 50 <= mx <= 250 and 250 <= my <= 280:
+                velocity = (mx - 50) * 50 // 200 + 1
+                vx = velocity * math.cos(math.radians(angle))
+                vy = -velocity * math.sin(math.radians(angle))
+            elif 50 <= mx <= 250 and 300 <= my <= 330:
+                x, y = 50, HEIGHT - 50
+                vx = velocity * math.cos(math.radians(angle))
+                vy = -velocity * math.sin(math.radians(angle))
+            elif 50 <= mx <= 250 and 350 <= my <= 380:
+                gravity += 0.1  # Increase gravity
+                gravity_text = font_medium.render(f"Gravity: {gravity}", True, WHITE)
+                screen.blit(gravity_text, (60, 355))
+
+    if x >= 50 and y <= HEIGHT - 50:
+        trajectory_points.append((int(x), int(y)))
+
+    x += vx
+    y += vy
+    vy += gravity
+
+    pygame.draw.circle(screen, BLACK, (int(x), int(y)), 5)
+
+    for point in trajectory_points:
+        pygame.draw.circle(screen, BLUE, point, 2)
 
     pygame.display.flip()
 
